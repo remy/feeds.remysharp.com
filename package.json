@@ -1,0 +1,17 @@
+{
+  "name": "feeds.remysharp.com",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "node index.js"
+  },
+  "keywords": [],
+  "author": "Remy Sharp (https://remysharp.com)",
+  "license": "MIT",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.3",
+    "markdown-it": "^8.4.2",
+    "node-fetch": "^2.6.0"
+  }
+}
