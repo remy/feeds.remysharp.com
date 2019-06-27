@@ -2,7 +2,9 @@ const cheerio = require('cheerio');
 const fetch = require('node-fetch');
 const write = require('fs').writeFileSync;
 const MarkdownIt = require('markdown-it');
-const md = new MarkdownIt();
+const md = new MarkdownIt({
+  linkify: true,
+});
 
 const user = 'rem';
 const bundle = 'web';
@@ -23,7 +25,9 @@ async function links() {
         description = '';
       }
 
-      description = md.render(description.replace(/<br>/g, ''));
+      description = md
+        .render(description.replace(/<\/?[^>]+(>|$)/g, ''))
+        .trim();
 
       const tags = $el
         .find('.tag')
@@ -97,7 +101,6 @@ function toRSS({ title, description, url, items }) {
 }
 
 async function main() {
-  console.clear();
   const items = await links();
   write(
     __dirname + '/public/links.xml',
