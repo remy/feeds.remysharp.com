@@ -9,8 +9,32 @@ const md = new MarkdownIt({
 const user = 'rem';
 const bundle = 'web';
 
+let cookie = '';
+
+async function login() {
+  const res = await fetch('https://pinboard.in/auth/', {
+    method: 'post',
+    redirect: 'manual',
+    body: `username=${user}&password=${escape(process.env.PINBOARD_TOKEN)}`,
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      'User-Agent':
+        'Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)',
+    },
+  });
+
+  cookie = res.headers
+    .raw()
+    ['set-cookie'].map(s => s.split(';')[0].trim())
+    .join('; ');
+}
+
 async function links() {
-  const res = await fetch(`https://pinboard.in/u:${user}/bundle:${bundle}/`);
+  const res = await fetch(`https://pinboard.in/u:${user}/bundle:${bundle}/`, {
+    headers: {
+      cookie,
+    },
+  });
   const html = await res.text();
   const $ = cheerio.load(html);
 
@@ -67,6 +91,29 @@ function safe(text) {
   return text.replace(/[<>&]/g, m => entities[m]);
 }
 
+function toJSON({ title, home, description, url, items }) {
+  return {
+    version: 'https://jsonfeed.org/version/1',
+    title,
+    home_page_url: home,
+    description,
+    author: {
+      name: 'Remy Sharp',
+      url: home,
+      avatar: 'https://remysharp.com/images/avatar-300.jpg',
+    },
+    feed_url: url,
+    items: items.map(({ title, url, description, pubDate, tags }) => ({
+      id: url,
+      url,
+      title,
+      date_published: pubDate.toJSON(),
+      content_html: description,
+      tags,
+    })),
+  };
+}
+
 function toRSS({ title, description, url, items }) {
   return `<?xml version="1.0" encoding="utf-8"?>
 <rss
@@ -101,6 +148,7 @@ function toRSS({ title, description, url, items }) {
 }
 
 async function main() {
+  await login();
   const items = await links();
   write(
     __dirname + '/public/links.xml',
@@ -110,6 +158,18 @@ async function main() {
       url: 'https://feeds.remysharp.com/links.xml',
       items,
     })
+  );
+  write(
+    __dirname + '/public/links.json',
+    JSON.stringify(
+      toJSON({
+        title: `remy sharp's l:inks`,
+        description: 'More [code] and all that jazz',
+        home: 'https://remysharp.com/',
+        url: 'https://feeds.remysharp.com/links.xml',
+        items,
+      })
+    )
   );
 }
 
