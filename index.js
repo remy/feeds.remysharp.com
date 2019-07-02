@@ -50,7 +50,9 @@ async function links() {
       }
 
       description = md
-        .render(description.replace(/<\/?[^>]+(>|$)/g, ''))
+        .render(
+          description.replace(/<\/?[^>]+(>|$)/g, '').replace(/&gt;/g, '>')
+        )
         .trim();
 
       const tags = $el
